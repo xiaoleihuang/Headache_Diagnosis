@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask
-from flask import render_template
+from flask import render_template, request, redirect, url_for, session
 
 
 def create_app(test_config=None):
@@ -35,20 +35,40 @@ def create_app(test_config=None):
         )
         # return 'Hello, World!'
 
-    @app.route('/screen')
+    @app.route('/screen', methods=['GET', 'POST'])
     def screen():
+        form = request.form
+        if request.method == "POST":
+            total_score = 0
+            
+            for key in request.form:
+                if key.startswith('answer-'):
+                    total_score += float(request.form[key])
+
+            print('total_score', total_score)
+            if total_score >= 2:
+                diagnosis="Probable migraine - consider triptan therapy (imitrex 50 mg, relpax 40 mg)"
+            else:
+                diagnosis="Not likely to be migraine - consider other types of headaches and referral to neurology."
+            return redirect(url_for('results', form=form, diagnosis=diagnosis))
+
         return render_template(
             'screen.html',
             static_url_path='', 
             static_folder='static'
         )
     
-    @app.route('/results')
+    @app.route('/results', methods=['GET', 'POST'])
     def results():
+        if 'diagnosis' in str(request):
+            diagnosis = request.args.get('diagnosis')
+        else:
+            diagnosis = 'test'
         return render_template(
             'results.html',
-            static_url_path='', 
-            static_folder='static'
+            static_url_path='',
+            static_folder='static',
+            diagnosis=diagnosis
         )
     
     return app
